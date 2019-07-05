@@ -34,6 +34,12 @@ class Graph {
 	private List<Integer> mNodes = new ArrayList<>();
 
 	/**
+	 * Used when traversing the graph so that we don't get caught in
+	 * loops.
+	 */
+	private List<Integer> mVisited = new ArrayList<>();
+
+	/**
 	 * Holds all the edges.
 	 *
 	 * Note that for a undirected graph, there will be just one
@@ -122,14 +128,16 @@ class Graph {
 	 *	O(n)
  	 *
  	 * @param	nodeId		The ID of the node in question.
+	 *
+	 * @param	directed	True only for directed graphs.
  	 */
- 	public List<Integer> getAllAdjacentTo(int nodeId) {
+ 	public List<Integer> getAllAdjacentTo(int nodeId, boolean directed) {
 
  		List<Integer> adjacentList = new ArrayList<>();
 		List<Edge> edgeList = getEdges(nodeId);
 		for (int i = 0; i < edgeList.size(); i++) {
 			Edge edge = edgeList.get(i);
-			if (mDirected) {
+			if (directed) {
 				if (edge.startNode == nodeId) {
 					// This is an edge that stars with our node.
 					// Add the end node to our list.
@@ -149,6 +157,14 @@ class Graph {
 
 		return adjacentList;
  	}
+
+	/**
+	 * Like getAllAdjacentTo(nodeId, directed), but this uses the
+	 * directedness of the current Graph.
+	 */
+	public List<Integer> getAllAdjacentTo(int nodeId) {
+		return getAllAdjacentTo(nodeId, mDirected);
+	}
 
 
 	/**
@@ -181,8 +197,75 @@ class Graph {
 			}
 
 		}
-
 		return found;
+	}
+
+
+	/**
+	 * Figures out if this Graph is connected or not.
+	 *
+	 * For undirected graphs, this simply means that all the nodes
+	 * are accessible from any other node (by one or more steps).
+	 * This is pretty straight-forward and what you'd expect.
+	 *
+	 * For directed graphs, I'm using the official term of
+	 * "weakly connected."  That is, it would be a connected
+	 * graph were it undirected.
+	 *
+	 * Note that a graph with no nodes is NOT connected.
+	 *
+	 * todo: write a Strongly Connected graph routine, that
+	 * tells if in a directed graph any node can get to any node.
+	 */
+	public boolean isConnected() {
+
+		// Easy case first.
+		if (mNodes.size() == 0) {
+			return false;
+		}
+
+		// create a list of visited vertices
+		List<Integer> visited = new ArrayList<>();
+
+		// start with the first node.
+		isConnectedHelper(mNodes.get(0), visited);
+
+		// if the size of the visited list is the same as our number of
+		// nodes, then we'll know that all were visited. This can only
+		// happen if the graph is connected!
+		if (visited.size() == mNodes.size()) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	/**
+	 * Does a recursive depth-first search of the Graph's edges
+	 * (assumes that it is undirected!).
+	 *
+	 *	@param	nodeId		An unvisited node in the Graph. This method
+	 *						will find all the edges that it connects to
+	 *						and so one.
+	 *
+	 *	@param	visited		A list of visited nodes. These will be
+	 *						added to as the nodes are visited.  Yes,
+	 *						this data structure WILL BE MODIFIED.
+	 */
+	private void isConnectedHelper(int nodeId, List<Integer> visited) {
+
+		// Start by adding this node to the visited list.
+		visited.add(nodeId);
+
+		// For considering connectivity, we always use an undirected graph
+		List<Integer> adjacentNodes = getAllAdjacentTo(nodeId, false);
+		for (Integer node : adjacentNodes) {
+			if (visited.indexOf(node) != -1) {
+				// not found in the visited list, do it!
+				isConnectedHelper(node, visited);
+			}
+		}
 	}
 
 	/**
