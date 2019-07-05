@@ -254,14 +254,16 @@ class Graph {
 	 *						this data structure WILL BE MODIFIED.
 	 */
 	private void isConnectedHelper(int nodeId, List<Integer> visited) {
+//		System.out.println("entering isConnectedHelper(" + nodeId + ", " + visited + ")");
 
 		// Start by adding this node to the visited list.
 		visited.add(nodeId);
 
 		// For considering connectivity, we always use an undirected graph
 		List<Integer> adjacentNodes = getAllAdjacentTo(nodeId, false);
+
 		for (Integer node : adjacentNodes) {
-			if (visited.indexOf(node) != -1) {
+			if (visited.contains(node) == false) {
 				// not found in the visited list, do it!
 				isConnectedHelper(node, visited);
 			}

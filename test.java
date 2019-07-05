@@ -12,12 +12,14 @@ class test {
 		System.out.println(test.toString());
 
 		// printAdjacent(test, 2);
-		printAllAdjacencies(test);
+//		printAllAdjacencies(test);
 
+		System.out.println("connected? " + test.isConnected());
 	}
 
 	/** just fills the graph with a bunch of nodes and edges */
 	private static void fillGraph(Graph graph) {
+		graph.addNode(0);
 		graph.addNode(1);
 		graph.addNode(2);
 		graph.addNode(3);
@@ -32,7 +34,8 @@ class test {
 		graph.addEdge(3, 4);
 		graph.addEdge(4, 5);
 		graph.addEdge(5, 6);
-		graph.addEdge(5, 7);
+//		graph.addEdge(5, 7);	// commenting this out makes it unconnected
+		graph.addEdge(7, 0);
 	}
 
 	private static void printAllAdjacencies(Graph graph) {
