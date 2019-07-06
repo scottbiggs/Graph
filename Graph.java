@@ -16,7 +16,9 @@ import java.util.Map;
  *	USAGE:
  *		- When instantiating, provide a Node type to fill
  *		  in the generic T. This will be whatever data you want
- *		  to be held in a node.
+ *		  to be held in a node.  I HIGHLY recommend that you override
+ *		  the toString() method for this class.  It's used by the
+ *		  Graph class' .toString() method.
  *
  *		- Also define whether it's directed (default is undirected).
  *
@@ -464,7 +466,11 @@ class Graph<T> {
 
 	/**
  	 *	Prints the contents of this graph to a string.
+	 *
+	 *	preconditions:
+	 *		Uses the .toString() method of the T class.
  	 */
+	@Override
  	public String toString() {
  		String nodestr = " Nodes[" + mNodes.size() + "]:";
 

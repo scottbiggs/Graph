@@ -42,7 +42,7 @@ class test {
 		mGraph.addEdge(3, 4);
 		mGraph.addEdge(4, 5);
 		mGraph.addEdge(5, 6);
-//		mGraph.addEdge(5, 7);	// commenting this out makes it unconnected
+		mGraph.addEdge(5, 7);	// commenting this out makes it unconnected
 		mGraph.addEdge(7, 0);
 	}
 
