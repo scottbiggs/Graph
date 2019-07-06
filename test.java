@@ -4,55 +4,77 @@ import java.util.List;
 /** Just a tester for the Graph class */
 class test {
 
+	//---------------------------------
+	// data
+	//---------------------------------
+
+	private static Graph<MyNode> mGraph;
+
+	//---------------------------------
+	//	methods
+	//---------------------------------
+
 	public static void main(String args[]) {
 
-		Graph test = new Graph(true);
-		fillGraph(test);
+		mGraph = new Graph<>(true);
+		fillGraph();
 
-		System.out.println(test.toString());
+		System.out.println(mGraph.toString());
 
-		// printAdjacent(test, 2);
-//		printAllAdjacencies(test);
 
-		System.out.println("connected? " + test.isConnected());
+		System.out.println("connected? " + mGraph.isConnected());
 	}
 
 	/** just fills the graph with a bunch of nodes and edges */
-	private static void fillGraph(Graph graph) {
-		graph.addNode(0);
-		graph.addNode(1);
-		graph.addNode(2);
-		graph.addNode(3);
-		graph.addNode(4);
-		graph.addNode(5);
-		graph.addNode(6);
-		graph.addNode(7);
+	private static void fillGraph() {
+		mGraph.addNode(0, new test().new MyNode(50));
+		mGraph.addNode(1, new test().new MyNode(100));
+		mGraph.addNode(2, new test().new MyNode(80));
+		mGraph.addNode(3, new test().new MyNode(200));
+		mGraph.addNode(4, new test().new MyNode(75));
+		mGraph.addNode(5, new test().new MyNode(50));
+		mGraph.addNode(6, new test().new MyNode(20));
+		mGraph.addNode(7, new test().new MyNode(5));
 
-		graph.addEdge(1, 2);
-		graph.addEdge(1, 3);
-		graph.addEdge(2, 3);
-		graph.addEdge(3, 4);
-		graph.addEdge(4, 5);
-		graph.addEdge(5, 6);
-//		graph.addEdge(5, 7);	// commenting this out makes it unconnected
-		graph.addEdge(7, 0);
+		mGraph.addEdge(1, 2);
+		mGraph.addEdge(1, 3);
+		mGraph.addEdge(2, 3);
+		mGraph.addEdge(3, 4);
+		mGraph.addEdge(4, 5);
+		mGraph.addEdge(5, 6);
+//		mGraph.addEdge(5, 7);	// commenting this out makes it unconnected
+		mGraph.addEdge(7, 0);
 	}
 
-	private static void printAllAdjacencies(Graph graph) {
-		List<Integer> nodeList = graph.getAllNodes();
-		for (int id : nodeList) {
-			printAdjacent(graph, id);
+	private static void printAllAdjacencies() {
+		List<Integer> nodeIdList = mGraph.getAllNodeIds();
+		for (int id : nodeIdList) {
+			printAdjacent(id);
 		}
 	}
 
-	private static void printAdjacent(Graph graph, int nodeId) {
+	private static void printAdjacent(int nodeId) {
 		System.out.print("Adjacent to " + nodeId + " is:");
-		List<Integer> adjList = graph.getAllAdjacentTo(nodeId);
+		List<Integer> adjList = mGraph.getAllAdjacentTo(nodeId);
 		for (int i = 0; i < adjList.size(); i++) {
 			System.out.print(" " + adjList.get(i));
 		}
 		System.out.println();
 
+	}
+
+
+	class MyNode {
+		public int dollars;
+
+		MyNode(int _dollars) {
+			dollars = _dollars;
+		}
+
+		@Override
+		public String toString() {
+			return "$" + dollars;
+		}
 	}
 
 }

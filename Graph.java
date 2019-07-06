@@ -1,6 +1,10 @@
 
 import java.util.List;
+import java.util.Set;
+import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * todo: use Templates to make the data more generic
@@ -10,7 +14,11 @@ import java.util.ArrayList;
  * not be as fast as it could be.
  *
  *	USAGE:
- *		- When instantiating, define whether it's directed.
+ *		- When instantiating, provide a Node type to fill
+ *		  in the generic T. This will be whatever data you want
+ *		  to be held in a node.
+ *
+ *		- Also define whether it's directed (default is undirected).
  *
  *		- Add the nodes, supplying a unique id for that node.
  *
@@ -18,7 +26,7 @@ import java.util.ArrayList;
  *
  *		- Use the graph as you like.
  */
-class Graph {
+class Graph<T> {
 
 	//-----------------------
 	//	constants
@@ -30,8 +38,14 @@ class Graph {
 	//	data
 	//-----------------------
 
-	/** holds all the nodes */
-	private List<Integer> mNodes = new ArrayList<>();
+	/**
+	 * Holds the nodes.
+	 *
+	 * In this case, a node is a key-value pair of an id and any data
+	 * associated with it.
+	 */
+	private HashMap<Integer, T> mNodes = new HashMap<>();
+//	private List<Integer> mNodes = new ArrayList<>();
 
 	/**
 	 * Used when traversing the graph so that we don't get caught in
@@ -60,6 +74,10 @@ class Graph {
 	public Graph() {
 	}
 
+	/**
+	 * Use this constructor to set the Graph as directed.
+	 * Undirected is the default.
+	 */
 	public Graph(boolean directed) {
 		mDirected = directed;
 	}
@@ -75,10 +93,12 @@ class Graph {
 	 *	@param	id	A unique id for this node.  Yes, the Graph class will
 	 *				break if the id isn't unique!
 	 *
+	 *	@param	nodeData	Some data to store with this node.
+	 *
 	 *	@return	The current number of nodes AFTER this one has been added.
 	 */
-	public int addNode(int id) {
-		mNodes.add(id);
+	public int addNode(int id, T nodeData) {
+		mNodes.put(id, nodeData);
 		return mNodes.size();
 	}
 
@@ -86,20 +106,20 @@ class Graph {
 	 * Adds an edge to this class.  Doesn't check for redundancies,
 	 * so be careful!
 	 *
-	 *	@param	startNode	The first the starting node (not relevant
+	 *	@param	startNodeId	The first the starting node (not relevant
 	 *						for non-directed graphs).
 	 *
-	 *	@param	endNode		The ending edge.
+	 *	@param	endNodeId	The ending edge.
 	 *
 	 *	@param	weight	The weight of this edge.
 	 *
 	 *	@returns	The total number of edges AFTER this has been added.
 	 */
-	public int addEdge(int startNode, int endNode, int weight) {
+	public int addEdge(int startNodeId, int endNodeId, int weight) {
 		Edge edge = new Edge();
-		edge.startNode = startNode;
-		edge.endNode = endNode;
-		edge.weight = 0;
+		edge.startNodeId = startNodeId;
+		edge.endNodeId = endNodeId;
+		edge.weight = weight;
 
 		mEdges.add(edge);
 		return mEdges.size();
@@ -108,8 +128,8 @@ class Graph {
 	/**
 	 *	Just like AddEdge, but without any weight.
 	 */
-	 public int addEdge(int startNode, int endNode) {
-		 return addEdge(startNode, endNode, 0);
+	 public int addEdge(int startNodeId, int endNodeId) {
+		 return addEdge(startNodeId, endNodeId, 0);
  	}
 
 	/**
@@ -122,7 +142,36 @@ class Graph {
 
 
 	 /**
- 	 * Returns a list of all the nodes adjacent to the given node.
+  	 * Creates an exact duplicate of this graph.
+  	 */
+  	public Graph clone() {
+  		Graph<T> newGraph = new Graph<>(mDirected);
+
+ 		// Copying the nodes is a little tricky as it's base
+ 		// is a HashMap.
+ 		// Get a Set of the keys (aka IDs) and then copy
+ 		// them one-by-one into the new graph
+ 		Set<Integer> ids = mNodes.keySet();
+ 		Iterator<Integer> iterator = ids.iterator();
+
+ 		while (iterator.hasNext()) {
+ 			int id = iterator.next();
+ 			T node = mNodes.get(id);
+ 			newGraph.addNode(id, node);
+ 		}
+
+ 		// The edges are much easier
+  		for (int i =0; i < mEdges.size(); i++) {
+  			Edge edge = mEdges.get(i);
+  			newGraph.addEdge(edge);
+  		}
+
+  		return newGraph;
+  	}
+
+
+	 /**
+ 	 * Returns a list of all the node IDs adjacent to the given node.
  	 * If none, this returns an empty list.
 	 *
 	 *	O(n)
@@ -135,22 +184,23 @@ class Graph {
 
  		List<Integer> adjacentList = new ArrayList<>();
 		List<Edge> edgeList = getEdges(nodeId);
+
 		for (int i = 0; i < edgeList.size(); i++) {
 			Edge edge = edgeList.get(i);
 			if (directed) {
-				if (edge.startNode == nodeId) {
+				if (edge.startNodeId == nodeId) {
 					// This is an edge that stars with our node.
 					// Add the end node to our list.
-					adjacentList.add(edge.endNode);
+					adjacentList.add(edge.endNodeId);
 				}
 			}
 			else {
 				// undirected--just include the other node.
-				if (edge.startNode == nodeId) {
-					adjacentList.add(edge.endNode);
+				if (edge.startNodeId == nodeId) {
+					adjacentList.add(edge.endNodeId);
 				}
 				else {
-					adjacentList.add(edge.startNode);
+					adjacentList.add(edge.startNodeId);
 				}
 			}
 		}
@@ -170,27 +220,68 @@ class Graph {
 	/**
 	 * Returns a list of all the node ids for this graph.
 	 */
-	public List<Integer> getAllNodes() {
-		return mNodes;
+	public List<Integer> getAllNodeIds() {
+		return new ArrayList<Integer>(mNodes.keySet());
 	}
 
+	/**
+	 * Returns a list of all the Node data.  Note that
+	 * ids are NOT part of this list!
+	 *
+	 * Note that this is a copy of the data.
+	 */
+	 public List<T> getAllNodeData() {
+		 return new ArrayList<T>(mNodes.values());
+	 }
+
+	/**
+	 * Returns the data associated with the node id.
+	 */
+	public T getNodeData(int nodeId) {
+		return mNodes.get(nodeId);
+	}
+
+	/**
+	 * Returns the id of the first node to match the given
+	 * data.
+	 *
+	 *	@return		The key or null if not found.
+	 */
+	public Integer getNodeId(T data) {
+		// Note: the id is also the key
+		Set<Integer> keys = mNodes.keySet();
+		Iterator<Integer> iterator = keys.iterator();
+
+		while (iterator.hasNext()) {
+			int key = iterator.next();
+			// Now get the associated data with this key and
+			// test it against the input param
+			T tmpData = mNodes.get(key);
+			if (tmpData.equals(data)) {
+				return key;
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Curious if two nodes are adjacent?  Use this to find out!
 	 * For undirected graphs, the order doesn't matter.
 	 */
-	public boolean isAdjacent(int startNode, int endNode) {
+	public boolean isAdjacent(int startNodeId, int endNodeId) {
 		boolean found = false;
 
 		// simply go through our adjacency list and see if there's a match.
 		for (Edge edge : mEdges) {
-			if ((edge.startNode == startNode) && (edge.endNode == endNode)) {
+			if ((edge.startNodeId == startNodeId) &&
+				(edge.endNodeId == endNodeId)) {
 				found = true;
 				break;
 			}
 			else if (mDirected == false) {
 				// special case for undirected graphs
-				if ((edge.startNode == endNode) && (edge.endNode == startNode)) {
+				if ((edge.startNodeId == endNodeId) &&
+					(edge.endNodeId == startNodeId)) {
 					found = true;
 					break;
 				}
@@ -213,6 +304,8 @@ class Graph {
 	 * graph were it undirected.
 	 *
 	 * Note that a graph with no nodes is NOT connected.
+	 * And a graph with a just 1 node is connected ONLY if
+	 * it connects to itself.
 	 *
 	 * todo: write a Strongly Connected graph routine, that
 	 * tells if in a directed graph any node can get to any node.
@@ -227,8 +320,9 @@ class Graph {
 		// create a list of visited vertices
 		List<Integer> visited = new ArrayList<>();
 
-		// start with the first node.
-		isConnectedHelper(mNodes.get(0), visited);
+		// start with any old key/ID (since HashMaps are not really ordered).
+		int anId = mNodes.keySet().iterator().next();	// finds the "first" key
+		isConnectedHelper(anId, visited);
 
 		// if the size of the visited list is the same as our number of
 		// nodes, then we'll know that all were visited. This can only
@@ -260,12 +354,12 @@ class Graph {
 		visited.add(nodeId);
 
 		// For considering connectivity, we always use an undirected graph
-		List<Integer> adjacentNodes = getAllAdjacentTo(nodeId, false);
+		List<Integer> adjacentNodeIds = getAllAdjacentTo(nodeId, false);
 
-		for (Integer node : adjacentNodes) {
-			if (visited.contains(node) == false) {
+		for (Integer adjacentNodeId : adjacentNodeIds) {
+			if (visited.contains(adjacentNodeId) == false) {
 				// not found in the visited list, do it!
-				isConnectedHelper(node, visited);
+				isConnectedHelper(adjacentNodeId, visited);
 			}
 		}
 	}
@@ -284,33 +378,13 @@ class Graph {
 
 		for (int i = 0; i < mEdges.size(); i++) {
 			Edge edge = mEdges.get(i);
-			if ((edge.startNode == nodeId) || (edge.endNode == nodeId)) {
+			if ((edge.startNodeId == nodeId) || (edge.endNodeId == nodeId)) {
 				edgeList.add(edge);
 			}
 		}
 
 		return edgeList;
 	}
-
- 	/**
- 	 * Creates an exact duplicate of this graph.
- 	 */
- 	public Graph clone() {
- 		Graph newGraph = new Graph(mDirected);
-
- 		for (int i = 0; i < mNodes.size(); i++) {
- 			newGraph.addNode(mNodes.get(i));
- 		}
-
- 		for (int i =0; i < mEdges.size(); i++) {
- 			Edge edge = mEdges.get(i);
- 			newGraph.addEdge(edge);
- 		}
-
- 		return newGraph;
- 	}
-
-
 
 	/**
 	 * Returns the number of nodes in this graph. Hope you didn't make
@@ -329,6 +403,7 @@ class Graph {
 		 return mEdges.size();
 	 }
 
+
 	/**
 	 * Removes the given node.  This assumes that any edges associated
 	 * with this node have been PREVIOUSLY removed!  This will cause
@@ -346,62 +421,72 @@ class Graph {
 	 *				FALSE if the node can't be found.
 	 */
 	 public boolean removeNode(int id) {
-		 for (int i = 0; i < mNodes.size(); i++) {
-			 if (mNodes.get(i) == id) {
-				 mNodes.remove(i);
-				 return true;
-			 }
+		 if (mNodes.remove(id) == null) {
+			 return false;
 		 }
-		 return false;	// couldn't be found
+		 return true;
 	 }
 
-	 /**
-	  *	Removes the specified edge.  For undirected graphs, will
-	  * try both directions, possibly removing both.
-	  */
-	 public boolean removeEdge(int startNode, int endNode) {
-		 boolean removed = false;
+	/**
+	 *	Removes the specified edge.  For undirected graphs, will
+	 * try both directions, possibly removing both.
+	 */
+	public boolean removeEdge(int startNodeId, int endNodeId) {
+		boolean removed = false;
 
-		 for (int i = 0; i < mEdges.size(); i++) {
-			 Edge edge = mEdges.get(i);
-			 if ((edge.startNode == startNode) && (edge.endNode == endNode)) {
-				 mEdges.remove(i);
-				 removed = true;
-				 break;
-			 }
-		 }
+		for (int i = 0; i < mEdges.size(); i++) {
+			Edge edge = mEdges.get(i);
+			if ((edge.startNodeId == startNodeId) &&
+				(edge.endNodeId == endNodeId)) {
+				mEdges.remove(i);
+				removed = true;
+				break;
+			}
+		}
 
-		 // TODO: this shouldn't be necessary!
-		 if (mDirected) {
-			 return removed;
-		 }
+		// TODO: this shouldn't be necessary!
+		if (mDirected) {
+			return removed;
+		}
 
-		 // Undirected, check for other direction
-		 for (int i = 0; i < mEdges.size(); i++) {
-			 Edge edge = mEdges.get(i);
-			 if ((edge.startNode == endNode) && (edge.endNode == startNode)) {
-				 mEdges.remove(i);
-				 removed = true;
-				 break;
-			 }
-		 }
+		// Undirected, check for other direction
+		for (int i = 0; i < mEdges.size(); i++) {
+			Edge edge = mEdges.get(i);
+			if ((edge.startNodeId == endNodeId) &&
+				(edge.endNodeId == startNodeId)) {
+				mEdges.remove(i);
+				removed = true;
+				break;
+			}
+		}
+		return removed;
+	}
 
-		 return removed;
-	 }
-
-	 /**
+	/**
  	 *	Prints the contents of this graph to a string.
  	 */
  	public String toString() {
  		String nodestr = " Nodes[" + mNodes.size() + "]:";
- 		for (int i = 0; i < mNodes.size(); i++) {
- 			nodestr = nodestr + " " + mNodes.get(i);
- 		}
+
+		// Display the nodes. Like as before, we need to get
+		// a Set of the keys/IDs and use an Iterator to process
+		// them.
+		Set<Integer> ids = mNodes.keySet();
+		Iterator<Integer> iterator = ids.iterator();
+
+		while (iterator.hasNext()) {
+			int id = iterator.next();
+			nodestr = nodestr + " (" + id + ": " + mNodes.get(id) + ")";
+		}
+
+ 		// for (int i = 0; i < mNodes.size(); i++) {
+ 		// 	nodestr = nodestr + " " + mNodes.get(i);
+ 		// }
 
  		String edgestr = " Edges[" + mEdges.size() + "]:";
  		for (int i = 0; i < mEdges.size(); i++) {
  			Edge edge = mEdges.get(i);
- 			edgestr = edgestr + " (" + edge.startNode + ", " + edge.endNode
+ 			edgestr = edgestr + " (" + edge.startNodeId + ", " + edge.endNodeId
  				+ ": " + edge.weight + ")";
  		}
 
@@ -418,8 +503,8 @@ class Graph {
 	 * only be used within the Graph class.
 	 */
 	private class Edge {
-		public int startNode = -1;
-		public int endNode = -1;
+		public int startNodeId;
+		public int endNodeId;
 		public int weight = 0;
 	}
 
