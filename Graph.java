@@ -92,14 +92,22 @@ class Graph<T> {
 	/**
 	 * Add a new node to this graph.
 	 *
-	 *	@param	id	A unique id for this node.  Yes, the Graph class will
-	 *				break if the id isn't unique!
+	 *	@param	id	A unique id for this node.
 	 *
 	 *	@param	nodeData	Some data to store with this node.
 	 *
 	 *	@return	The current number of nodes AFTER this one has been added.
+	 *
+	 *	@throws	GraphNodeDuplicateIdException	if the id is already used
+	 *											for a node.
 	 */
-	public int addNode(int id, T nodeData) {
+	public int addNode(int id, T nodeData)
+			throws GraphNodeDuplicateIdException {
+		// check to see if id already exists
+		if (mNodes.containsKey(id)) {
+			throw new GraphNodeDuplicateIdException();
+		}
+
 		mNodes.put(id, nodeData);
 		return mNodes.size();
 	}
@@ -137,16 +145,20 @@ class Graph<T> {
 	/**
 	 * private util method to simplify a few things
 	 */
-	 private int addEdge(Edge edge) {
-		 mEdges.add(edge);
-		 return mEdges.size();
-	 }
+	private int addEdge(Edge edge) {
+		mEdges.add(edge);
+		return mEdges.size();
+	}
 
 
-	 /**
+	/**
   	 * Creates an exact duplicate of this graph.
+	 *
+	 * Returns NULL if something was wrong with the
+	 * graph that prevents making a clone (probably
+	 * a duplicate node ID).
   	 */
-  	public Graph clone() {
+	public Graph clone() {
   		Graph<T> newGraph = new Graph<>(mDirected);
 
  		// Copying the nodes is a little tricky as it's base
@@ -156,11 +168,18 @@ class Graph<T> {
  		Set<Integer> ids = mNodes.keySet();
  		Iterator<Integer> iterator = ids.iterator();
 
- 		while (iterator.hasNext()) {
- 			int id = iterator.next();
- 			T node = mNodes.get(id);
- 			newGraph.addNode(id, node);
- 		}
+		try {
+			while (iterator.hasNext()) {
+	 			int id = iterator.next();
+	 			T node = mNodes.get(id);
+	 			newGraph.addNode(id, node);
+	 		}
+		}
+		catch (GraphNodeDuplicateIdException e) {
+			// duplicate node id found
+			e.printStackTrace();
+			return null;
+		}
 
  		// The edges are much easier
   		for (int i =0; i < mEdges.size(); i++) {
@@ -315,7 +334,7 @@ class Graph<T> {
 	public boolean isConnected() {
 
 		// Easy case first.
-		if (mNodes.size() == 0) {
+		if ((mNodes.size() == 0) || (mEdges.size() == 0)) {
 			return false;
 		}
 
